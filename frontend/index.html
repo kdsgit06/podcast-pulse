@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Podcast Pulse</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+        <h1 class="text-2xl font-bold mb-4 text-center text-blue-600">Podcast Pulse</h1>
+        <input id="urlInput" type="text" placeholder="Enter YouTube URL" class="w-full p-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <button id="submitBtn" class="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition duration-200">Summarize</button>
+        <div id="result" class="mt-4">
+            <div id="loading" class="hidden text-center text-gray-500">Loading...</div>
+            <div id="summary" class="hidden">
+                <h2 class="text-xl font-semibold mt-4">Core Concepts</h2>
+                <ul id="topics" class="list-disc pl-5"></ul>
+                <h2 class="text-xl font-semibold mt-4">Actionable Advice</h2>
+                <ul id="advice" class="list-disc pl-5"></ul>
+                <h2 class="text-xl font-semibold mt-4">Key Quotes</h2>
+                <ul id="quotes" class="list-disc pl-5"></ul>
+            </div>
+            <div id="error" class="hidden text-red-500"></div>
+        </div>
+    </div>
+    <script>
+        document.getElementById('submitBtn').addEventListener('click', () => {
+            const url = document.getElementById('urlInput').value;
+            if (!url) {
+                document.getElementById('error').innerHTML = 'Please enter a URL';
+                document.getElementById('error').classList.remove('hidden');
+                return;
+            }
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('summary').classList.add('hidden');
+            document.getElementById('error').classList.add('hidden');
+            fetch(`http://127.0.0.1:8000/download?youtube_url=${encodeURIComponent(url)}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById('loading').classList.add('hidden');
+                if (data.error) {
+                    document.getElementById('error').innerHTML = data.error;
+                    document.getElementById('error').classList.remove('hidden');
+                } else {
+                    document.getElementById('summary').classList.remove('hidden');
+                    document.getElementById('topics').innerHTML = data.summary.topics.map(t => `<li>${t}</li>`).join('');
+                    document.getElementById('advice').innerHTML = data.summary.advice.map(a => `<li>${a}</li>`).join('');
+                    document.getElementById('quotes').innerHTML = data.summary.quotes.map(q => `<li>${q}</li>`).join('');
+                }
+            })
+            .catch(error => {
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('error').innerHTML = `Error: ${error.message}`;
+                document.getElementById('error').classList.remove('hidden');
+            });
+        });
+    </script>
+</body>
+</html>
