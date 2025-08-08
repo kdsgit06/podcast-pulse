@@ -9,3 +9,10 @@ __pycache__/
 
 # Ignore database files (optional, recreate on Vercel)
 *.db
+__pycache__/
+*.pyc
+.env
+.venv/
+node_modules/
+*.txt
+downloads/
