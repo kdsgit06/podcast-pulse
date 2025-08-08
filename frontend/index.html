@@ -3,63 +3,110 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Podcast Pulse</title>
+    <meta name="description" content="Extract timeless wisdom from podcasts with Podcast Pulse.">
+    <title>Podcast Pulse - Wisdom Distilled</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background: #f8f1e9; font-family: 'Open Sans', sans-serif; margin: 0; }
+        .container { background: #fff; border: 1px solid #e5e7eb; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .pulse-core { animation: pulse 1.5s infinite ease-in-out; background: #e5e7eb; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.03); } 100% { transform: scale(1); } }
+        .section { transition: all 0.3s ease; cursor: pointer; border: 1px solid #e5e7eb; position: relative; }
+        .section:hover { transform: translateY(-2px); }
+        .section::after { content: '▼'; position: absolute; right: 10px; transition: transform 0.3s ease; }
+        .section.collapsed::after { content: '▶'; }
+        .section.expanded ul { max-height: 200px; overflow: hidden; }
+        .section.collapsed ul { max-height: 0; overflow: hidden; }
+        .hidden { display: none; }
+        @media (max-width: 640px) { .content { padding: 0.5rem; } }
+    </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
-    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-        <h1 class="text-2xl font-bold mb-4 text-center text-blue-600">Podcast Pulse</h1>
-        <input id="urlInput" type="text" placeholder="Enter YouTube URL" class="w-full p-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
-        <button id="submitBtn" class="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition duration-200">Summarize</button>
-        <div id="result" class="mt-4">
-            <div id="loading" class="hidden text-center text-gray-500">Loading...</div>
-            <div id="summary" class="hidden">
-                <h2 class="text-xl font-semibold mt-4">Core Concepts</h2>
-                <ul id="topics" class="list-disc pl-5"></ul>
-                <h2 class="text-xl font-semibold mt-4">Actionable Advice</h2>
-                <ul id="advice" class="list-disc pl-5"></ul>
-                <h2 class="text-xl font-semibold mt-4">Key Quotes</h2>
-                <ul id="quotes" class="list-disc pl-5"></ul>
+<body>
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="container p-4 rounded-lg w-full max-w-lg text-center">
+            <h1 class="text-2xl font-semibold mb-2 text-gray-800">Podcast Pulse</h1>
+            <p class="text-sm mb-2 text-gray-600">Discover wisdom from podcasts.</p>
+            <input id="urlInput" type="text" placeholder="Paste YouTube URL" aria-label="Enter YouTube URL" class="w-full p-2 mb-2 border border-gray-300 rounded-lg bg-white text-gray-800 focus:outline-none focus:ring-1 focus:ring-blue-400" aria-required="true">
+            <button id="submitBtn" class="w-full bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 transition duration-150" aria-label="Extract Insights">Extract Wisdom</button>
+            <div id="result" class="mt-4 text-left">
+                <div id="loading" class="hidden text-center text-blue-600">Processing...</div>
+                <div id="summary" class="hidden">
+                    <div id="podcastTitle" class="mb-2 p-2 bg-white rounded-lg"><h2 class="text-lg font-medium text-gray-800"></h2></div>
+                    <div id="pulseCore" class="pulse-core mb-2 p-2 rounded-full">
+                        <h2 class="text-base font-medium text-gray-800">Core of Wisdom</h2>
+                    </div>
+                    <div id="topics" class="section mb-2 p-2 bg-white rounded-lg"><h3 class="text-base font-medium text-gray-800">Core Topics</h3><ul class="list-disc pl-4 mt-1"></ul></div>
+                    <div id="resources" class="section mb-2 p-2 bg-white rounded-lg"><h3 class="text-base font-medium text-gray-800">Resources</h3><ul class="list-disc pl-4 mt-1"></ul></div>
+                    <div id="keyQuestions" class="section mt-2 p-2 bg-white rounded-lg"><h3 class="text-base font-medium text-gray-800">Key Questions</h3><ul class="list-disc pl-4 mt-1"></ul></div>
+                </div>
+                <div id="error" class="hidden text-red-600"></div>
+                <div id="history" class="mt-2 p-2 bg-white rounded-lg hidden">
+                    <h3 class="text-base font-medium text-gray-800">History</h3>
+                    <ul class="list-disc pl-4 mt-1"></ul>
+                </div>
+                <div id="feedback" class="mt-2">
+                    <textarea id="feedbackInput" placeholder="Share your thoughts..." aria-label="Feedback input" class="w-full p-1 mb-1 border border-gray-300 rounded-lg bg-white text-gray-800 focus:outline-none focus:ring-1 focus:ring-blue-400" rows="2"></textarea>
+                    <button id="submitFeedback" class="w-full bg-blue-600 text-white p-1 rounded-lg hover:bg-blue-700 transition duration-150" aria-label="Submit Feedback">Send Feedback</button>
+                </div>
             </div>
-            <div id="error" class="hidden text-red-500"></div>
         </div>
     </div>
     <script>
-        document.getElementById('submitBtn').addEventListener('click', () => {
-            const url = document.getElementById('urlInput').value;
+        document.getElementById('submitBtn').addEventListener('click', async () => {
+            const url = document.getElementById('urlInput').value.trim();
             if (!url) {
-                document.getElementById('error').innerHTML = 'Please enter a URL';
+                document.getElementById('error').textContent = 'Please enter a valid URL';
                 document.getElementById('error').classList.remove('hidden');
                 return;
             }
             document.getElementById('loading').classList.remove('hidden');
             document.getElementById('summary').classList.add('hidden');
             document.getElementById('error').classList.add('hidden');
-            fetch(`http://127.0.0.1:8000/download?youtube_url=${encodeURIComponent(url)}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
-            })
-            .then(response => {
-                if (!response.ok) throw new Error('Network response was not ok');
-                return response.json();
-            })
-            .then(data => {
+
+            try {
+                const response = await fetch(`/download?youtube_url=${encodeURIComponent(url)}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await response.json();
                 document.getElementById('loading').classList.add('hidden');
-                if (data.error) {
-                    document.getElementById('error').innerHTML = data.error;
+                if (!response.ok || data.error) {
+                    document.getElementById('error').textContent = data.error || 'Error processing request';
                     document.getElementById('error').classList.remove('hidden');
                 } else {
                     document.getElementById('summary').classList.remove('hidden');
-                    document.getElementById('topics').innerHTML = data.summary.topics.map(t => `<li>${t}</li>`).join('');
-                    document.getElementById('advice').innerHTML = data.summary.advice.map(a => `<li>${a}</li>`).join('');
-                    document.getElementById('quotes').innerHTML = data.summary.quotes.map(q => `<li>${q}</li>`).join('');
+                    document.getElementById('podcastTitle').querySelector('h2').textContent = data.summary.title || 'No title';
+                    document.getElementById('topics').querySelector('ul').innerHTML = (data.summary.topics || []).map(t => `<li>${t.name}: ${t.quotes_advice.join(', ')}</li>`).join('');
+                    document.getElementById('resources').querySelector('ul').innerHTML = (data.summary.resources || []).map(r => `<li>${r}</li>`).join('');
+                    document.getElementById('keyQuestions').querySelector('ul').innerHTML = (data.summary.key_questions || []).map(q => `<li>${q}</li>`).join('');
+                    // Toggle initial state to collapsed
+                    document.querySelectorAll('.section').forEach(section => section.classList.add('collapsed'));
                 }
-            })
-            .catch(error => {
+            } catch (error) {
                 document.getElementById('loading').classList.add('hidden');
-                document.getElementById('error').innerHTML = `Error: ${error.message}`;
+                document.getElementById('error').textContent = 'Network error or invalid response';
                 document.getElementById('error').classList.remove('hidden');
+                console.error('Fetch error:', error);
+            }
+        });
+
+        document.querySelectorAll('.section').forEach(section => {
+            section.addEventListener('click', () => {
+                section.classList.toggle('collapsed');
+                section.classList.toggle('expanded');
             });
+        });
+
+        document.getElementById('submitFeedback').addEventListener('click', () => {
+            const feedback = document.getElementById('feedbackInput').value.trim();
+            if (feedback) {
+                fetch('/feedback', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ feedback }) })
+                .then(() => {
+                    alert('Thank you for your feedback!');
+                    document.getElementById('feedbackInput').value = '';
+                })
+                .catch(() => alert('Failed to submit feedback.'));
+            }
         });
     </script>
 </body>
