@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from . import downloader
 from dotenv import load_dotenv
 import os
-from fastapi.responses import RedirectResponse, FileResponse
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 import json
 import sqlite3
@@ -15,10 +15,10 @@ api_key = os.getenv("GEMINI_API_KEY")  # Optional
 
 app = FastAPI()
 
-# Enable CORS
+# Enable CORS with deployed frontend URL and local development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://192.168.1.6", "http://127.0.0.1", "http://localhost:3000", "*"],
+    allow_origins=["https://podcast-pulse.vercel.app", "http://localhost:3000", "http://192.168.1.6", "http://127.0.0.1", "*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -66,7 +66,6 @@ async def get_history():
 async def submit_feedback(feedback: str):
     try:
         print(f"Received feedback: {feedback}")  # Debug
-        # Here you could save to a file or database (e.g., SQLite)
         with open("feedback.txt", "a", encoding="utf-8") as f:
             f.write(f"{feedback}\n")
         return {"message": "Feedback received successfully"}
@@ -96,4 +95,3 @@ init_db()
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
-
