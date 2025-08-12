@@ -74,7 +74,7 @@ async def submit_feedback(feedback: str):
         raise HTTPException(status_code=500, detail=f"Error submitting feedback: {str(e)}")
 
 # Mount the frontend folder
-app.mount("/frontend", StaticFiles(directory="frontend"), name="frontend")
+
 
 # Serve index.html directly for root
 @app.get("/", response_class=FileResponse)
