@@ -1,8 +1,8 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from . import downloader
 from dotenv import load_dotenv
+import downloader
 import os
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
