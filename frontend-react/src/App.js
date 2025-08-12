@@ -3,7 +3,6 @@ import './App.css';
 
 function App() {
   const [summary, setSummary] = useState(null);
-  const [history, setHistory] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [url, setUrl] = useState('');
@@ -16,7 +15,7 @@ function App() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('/download', {
+      const response = await fetch('https://podcast-pulse-backend.onrender.com/download', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ youtube_url: url })
@@ -24,8 +23,6 @@ function App() {
       const data = await response.json();
       if (!response.ok || data.error) throw new Error(data.error || 'Error');
       setSummary(data.summary);
-      const histResponse = await fetch('/history');
-      setHistory((await histResponse.json()).history);
     } catch (err) {
       setError(err.message);
     } finally {
