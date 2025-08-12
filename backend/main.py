@@ -77,9 +77,9 @@ async def submit_feedback(feedback: str):
 
 
 # Serve index.html directly for root
-@app.get("/", response_class=FileResponse)
+@app.get("/")
 async def read_index():
-    return FileResponse("frontend/index.html", media_type="text/html")
+    return ("message": "Podcast Pulse API - Use /download with POST")
 
 # Initialize SQLite database
 def init_db():
