@@ -53,7 +53,6 @@ async def get_history():
     return {"history": history}
 
 # Mount the frontend folder
-app.mount("/frontend", StaticFiles(directory="frontend"), name="frontend")
 
 # Redirect root URL to frontend/index.html
 @app.get("/")
