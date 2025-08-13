@@ -2,10 +2,9 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
-import downloader
+from . import downloader  # Relative import for downloader.py in the same directory
 import os
-from fastapi.responses import RedirectResponse
-from fastapi.staticfiles import StaticFiles
+import sqlite3
 import json
 
 # Load environment variables
@@ -17,7 +16,7 @@ app = FastAPI()
 # Enable CORS
 app.add_middleware(
     CORSMiddleware,
-   allow_origins=["https://podcast-pulse-xi.vercel.app", "http://localhost:3000", "http://127.0.0.1", "*"],
+    allow_origins=["https://podcast-pulse-xi.vercel.app", "http://localhost:3000", "http://127.0.0.1", "*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -49,14 +48,12 @@ async def get_history():
     conn.close()
     return {"history": history}
 
-# Mount the frontend folder
-
-# Redirect root URL to frontend/index.html
+# Redirect root URL to API info
 @app.get("/")
 async def redirect_root():
     return {"message": "Podcast Pulse API - Use /download with POST"}
 
-# Optional: Add a default route or message
+# Optional API root
 @app.get("/api")
 async def api_root():
     return {"message": "Podcast Pulse API - Use /download with POST"}
