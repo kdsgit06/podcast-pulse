@@ -17,12 +17,10 @@ app = FastAPI()
 # Enable CORS
 app.add_middleware(
     CORSMiddleware,
-   allow_origins=["https://podcast-pulse-xi.vercel.app", "https://podcast-pulse.vercel.app", "http://localhost:3000", "http://192.168.1.6", "http://127.0.0.1", "*"],
+   allow_origins=["https://podcast-pulse-xi.vercel.app", "http://localhost:3000", "http://127.0.0.1", "*"],  # Add your Vercel URL
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
+    allow_methods=["*"],  # Allow all methods (GET, POST, OPTIONS, etc.)
+    allow_headers=["*"],  #
 class URLRequest(BaseModel):
     youtube_url: str
 
