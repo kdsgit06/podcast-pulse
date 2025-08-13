@@ -57,7 +57,7 @@ async def get_history():
 # Redirect root URL to frontend/index.html
 @app.get("/")
 async def redirect_root():
-    return RedirectResponse(url="/frontend/index.html")
+    return {"message": "Podcast Pulse API - Use /download with POST"}
 
 # Optional: Add a default route or message
 @app.get("/api")
