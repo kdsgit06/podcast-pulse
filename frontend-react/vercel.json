@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/download.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "package.json",
+      "use": "@vercel/next@canary"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/download",
+      "dest": "api/download.py"
+    }
+  ]
+}
