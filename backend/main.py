@@ -13,7 +13,7 @@ api_key = os.getenv("GEMINI_API_KEY")  # Optional
 
 app = FastAPI()
 
-# Enable CORS
+# Enable CORS (without wildcard for allow_credentials=True)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://podcast-pulse-xi.vercel.app", "http://localhost:3000", "http://127.0.0.1"],
