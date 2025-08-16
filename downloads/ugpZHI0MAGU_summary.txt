@@ -1,0 +1,55 @@
+{
+  "message": "Processed https://www.youtube.com/watch?v=ugpZHI0MAGU",
+  "video_id": "ugpZHI0MAGU",
+  "title": "Journey Of A Software Engineer - Part 1 (#technology #software #engineering #podcast #techpodcasts)",
+  "topics": [
+    {
+      "name": "Dealing with Rejection",
+      "quotes_advice": [
+        "So I faced lot of rejection...But later somehow I got opportunity.",
+        "Rejection comes with lot of positive things...if you take in that way.",
+        "You have to understand first why you got rejected and what was your weaknesses."
+      ]
+    },
+    {
+      "name": "Industry Growth and Perspectives",
+      "quotes_advice": [
+        "Eventually all the industries grows.",
+        "There are two perspective of each thing.",
+        "If you see what is the benefit, then you can see in a different way...But if you try to understand the bad part...then there will be different perspectives."
+      ]
+    },
+    {
+      "name": "Work-Life Balance in Software Engineering",
+      "quotes_advice": [
+        "We have to stay around 7 to 8 hours in office nowadays.",
+        "There is no time restriction...you can go whenever you want...The only central idea you have to be available.",
+        "Make yourself available in a smart way that you are only available."
+      ]
+    },
+    {
+      "name": "Continuous Learning and Skill Development",
+      "quotes_advice": [
+        "I keep on updated myself.",
+        "I would have done little bit more practice and more command on my programming skills...",
+        "I started focusing and then I eventually got different project, different technology..."
+      ]
+    },
+    {
+      "name": "Importance of Both Programming and Domain Knowledge",
+      "quotes_advice": [
+        "These both terms are actually interrelated to each other.",
+        "If you know only programming language what you are going to implement that will be answered from the domain knowledge actually.",
+        "If you want to get more progress in your career, you have to keep align these tokens domain and technology."
+      ]
+    }
+  ],
+  "resources": [],
+  "key_questions": [
+    "What does a typical workday look like for a software engineer?",
+    "What advice would you give to your younger self entering the software industry?",
+    "How has the technology landscape changed over the past seven years?",
+    "What's more important in the long run: programming knowledge or domain expertise?",
+    "How do you maintain a work-life balance in a demanding field like software engineering?"
+  ]
+}

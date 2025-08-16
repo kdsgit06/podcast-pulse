@@ -1,0 +1,21 @@
+{
+  "topics": [
+    "Breaking negative patterns and the victim mindset",
+    "The power of thoughts and their impact on reality",
+    "Neuroplasticity and changing the brain",
+    "The role of emotions in shaping reality",
+    "Meditation and mindfulness practices",
+    "The importance of discomfort and uncertainty in growth",
+    "Creating a new personal reality"
+  ],
+  "advice": [
+    "Become conscious of your unconscious thoughts, actions, and feelings",
+    "Meditate and practice mindfulness to become familiar with your inner self",
+    "Embrace discomfort and uncertainty as opportunities for growth"
+  ],
+  "quotes": [
+    "Nerve cells that fire together, wire together.",
+    "It's been said that you should meditate for 20 minutes a day, unless you're really busy, then you should meditate for an hour a day.",
+    "When the pain of staying the same outweighs the pain of change, then we will change."
+  ]
+}

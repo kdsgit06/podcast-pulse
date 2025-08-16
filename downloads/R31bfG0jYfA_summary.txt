@@ -1,0 +1,76 @@
+{
+  "message": "Processed https://www.youtube.com/watch?v=R31bfG0jYfA",
+  "video_id": "R31bfG0jYfA",
+  "title": "How Elite Developers Think Differently (And How You Can Too)",
+  "topics": [
+    {
+      "name": "Learning and Skill Development",
+      "quotes_advice": [
+        "The best way to learn anything is to build something.",
+        "Put yourself in a situation where you have to use those skills, try different things, fail, and see what works and what doesn't.",
+        "A clear goal, especially from a learning aspect, is really going to help drive and move you forward."
+      ]
+    },
+    {
+      "name": "Problem Solving and Critical Thinking",
+      "quotes_advice": [
+        "It's always better to go with the real intention or requirement that led to a technical solution.",
+        "Trying dumb ideas or things you think are not going to work is very rewarding.",
+        "Use your critical thinking skills to come up with improvements for yourself or your environment."
+      ]
+    },
+    {
+      "name": "Balancing Technical and Non-Technical Skills",
+      "quotes_advice": [
+        "There needs to be a balance between technical depth and other skills.",
+        "Building software is not just about knowing your tech but also other skills like communication and collaboration.",
+        "The more you move forward in your career, the more you have to find ways to communicate with a broader audience."
+      ]
+    },
+    {
+      "name": "Effective Communication and Collaboration",
+      "quotes_advice": [
+        "Involving everyone early on when things are unclear can lead to unclear feedback.",
+        "Direct communication from stakeholders to the team, bypassing the product person, can increase stress.",
+        "Co-creating with stakeholders and complete transparency can help create a common understanding."
+      ]
+    },
+    {
+      "name": "Organizational Dynamics and Leadership",
+      "quotes_advice": [
+        "The environment you're in has a lot of influence on how people work.",
+        "Enable the team to experiment and fail fast without making a lot of cost or casualties.",
+        "Going from organization to organization can offer fresh perspectives and insights into different ways of working."
+      ]
+    },
+    {
+      "name": "Adaptability and Continuous Learning",
+      "quotes_advice": [
+        "Swinging between specialized and general roles can help accumulate knowledge and avoid disconnection.",
+        "The biggest skill is learning, and now it's just going to be amplified with more tools to learn faster.",
+        "Foundational knowledge and experience are still crucial, even with faster learning."
+      ]
+    },
+    {
+      "name": "Innovation and Experimentation",
+      "quotes_advice": [
+        "Never say you're not going to try something just because you read somewhere that it doesn't work.",
+        "Let people make mistakes and learn from them.",
+        "There's value in trying different ideas and seeing why they don't work and how."
+      ]
+    }
+  ],
+  "resources": [
+    "It Doesn't Have to Be Crazy at Work (Basecamp)",
+    "Stack Overflow",
+    "Hey.com",
+    "Basecamp"
+  ],
+  "key_questions": [
+    "How do elite developers think differently?",
+    "How can one balance technical skills with other essential skills?",
+    "What are the most effective ways to learn and grow as a software engineer?",
+    "How can organizations foster a culture of innovation and collaboration?",
+    "How can individuals and teams adapt to the evolving landscape of software development?"
+  ]
+}

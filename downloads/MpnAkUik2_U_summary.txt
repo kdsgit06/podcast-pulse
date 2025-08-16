@@ -1,0 +1,80 @@
+{
+  "title": "Best Podcast Setup for Any Budget (Beginner Friendly)",
+  "topics": [
+    {
+      "name": "Basic Podcasting Setup",
+      "quotes_advice": [
+        "You really only need two things: a microphone and a way to record and edit the audio.",
+        "I recommend getting a USB powered microphone because they're really simple plug and play.",
+        "For recording and editing, I recommend a semi-automated style using a platform like Riverside."
+      ]
+    },
+    {
+      "name": "Microphones",
+      "quotes_advice": [
+        "I recommend dynamic microphones, also known as podcasting microphones.",
+        "For beginners, USB microphones are great for plug-and-play simplicity.",
+        "XLR mics offer higher quality but require an audio interface."
+      ]
+    },
+    {
+      "name": "Recording and Editing",
+      "quotes_advice": [
+        "Avoid the manual method (Audacity/GarageBand) as it's time-consuming and leads to quitting.",
+        "Use a semi-automated platform like Riverside for simplified recording, editing, and publishing.",
+        "Riverside offers AI tools for transcript-based editing and automatic editing."
+      ]
+    },
+    {
+      "name": "Video Podcasts",
+      "quotes_advice": [
+        "Video podcasts are increasingly popular, with 42% of US adults preferring them over audio.",
+        "Video is more engaging and easier to share clips on platforms like TikTok and Instagram.",
+        "Riverside's 'Magic Clips' feature automatically selects segments for short-form content."
+      ]
+    },
+    {
+      "name": "Cameras",
+      "quotes_advice": [
+        "Budget option: Use your laptop's built-in webcam.",
+        "Mid-range option: Invest in a high-quality external webcam like Obsbot or Insta360.",
+        "High-end option: Use a mirrorless camera like a Sony ZV-E1 or ZV-E10."
+      ]
+    },
+    {
+      "name": "Headphones",
+      "quotes_advice": [
+        "Not strictly required with Riverside's noise cancellation, but useful for monitoring audio.",
+        "Budget-friendly: Use wireless earbuds like Apple AirPods.",
+        "For maximum clarity: Use over-ear headphones like the Rode NTH-100s."
+      ]
+    },
+    {
+      "name": "Lighting",
+      "quotes_advice": [
+        "Budget-friendly: Utilize natural light from a window (avoid direct sunlight).",
+        "For consistent high-quality lighting: Use a softbox with an LED light."
+      ]
+    }
+  ],
+  "resources": [
+    "Rode PodMic USB",
+    "Shure MV7 Plus",
+    "Audacity",
+    "GarageBand",
+    "Riverside",
+    "Obsbot",
+    "Insta360",
+    "Sony ZV-E1",
+    "Sony ZV-E10",
+    "Apple AirPods",
+    "Rode NTH-100s"
+  ],
+  "key_questions": [
+    "What's the simplest podcasting setup for beginners?",
+    "How can I make my podcast engaging and successful?",
+    "What are the best microphones, cameras, and other equipment for different budgets?",
+    "What are the advantages of video podcasts?",
+    "How can I streamline the recording and editing process?"
+  ]
+}

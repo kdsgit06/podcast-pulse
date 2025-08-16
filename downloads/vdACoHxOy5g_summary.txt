@@ -1,0 +1,46 @@
+{
+  "message": "Processed https://youtu.be/vdACoHxOy5g",
+  "video_id": "vdACoHxOy5g",
+  "title": "Creating Vector Stores and Custom Files for Open AI API Usage",
+  "topics": [
+    {
+      "name": "Using Custom Files with OpenAI API",
+      "quotes_advice": [
+        "Upload individual files like white papers, PDFs, and ebooks for OpenAI to access during API calls.",
+        "Use the 'files' section in the OpenAI API platform to upload and manage your files.",
+        "Ensure removal of PII from files containing personal data before uploading."
+      ]
+    },
+    {
+      "name": "Creating and Using Vector Stores",
+      "quotes_advice": [
+        "Vector stores allow uploading multiple documents into a vectorized database for efficient searching.",
+        "Use vector stores for large amounts of content, such as YouTube videos or PDF libraries.",
+        "Create an assistant directly from your vector store to leverage the stored information."
+      ]
+    },
+    {
+      "name": "Building OpenAI Assistants",
+      "quotes_advice": [
+        "Assistants are custom GPTs callable via the API.",
+        "Assistants can leverage vector stores, individual files, web search, and custom functions.",
+        "Building assistants within the API is similar to creating custom GPTs in the chat interface."
+      ]
+    },
+    {
+      "name": "Removing PII from Data",
+      "quotes_advice": [
+        "Scrub all personally identifiable information (PII) from data before uploading to AI models.",
+        "Watch the video on PII removal before uploading call recordings or other sensitive data."
+      ]
+    }
+  ],
+  "resources": [],
+  "key_questions": [
+    "How can custom files enhance OpenAI API outputs?",
+    "What are the advantages of using vector stores over individual files?",
+    "How can OpenAI assistants be used to generate dynamic content?",
+    "What are the best practices for data privacy when using OpenAI API?",
+    "How can vector stores empower assistants to create a custom GPT experience via APIs?"
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "title": "The single biggest reason why start-ups succeed | Bill Gross | TED",
+  "topics": [
+    {
+      "name": "Timing",
+      "quotes_advice": [
+        "Timing accounted for 42% of the difference between success and failure.",
+        "The best way to really assess timing is to really look whether consumers are really ready for what you have to offer them and to be really, really honest about it.",
+        "Timing might matter even more [than idea, team, execution, business model, or funding]"
+      ]
+    },
+    {
+      "name": "Team and Execution",
+      "quotes_advice": [
+        "So much about a team's execution is its ability to adapt to getting punched in the face by the customer.",
+        "The customer is the true reality.",
+        "Team and execution came in second [after timing]."
+      ]
+    },
+    {
+      "name": "Idea",
+      "quotes_advice": [
+        "The idea, the differentiability of the idea, the uniqueness idea, that actually came in third [after timing and execution].",
+        "This isn't absolutely definitive. It's not to say that the idea isn't important, but it very much surprised me that the idea wasn't the most important thing.",
+        "Sometimes it mattered more when it was actually timed"
+      ]
+    },
+    {
+      "name": "Business Model",
+      "quotes_advice": [
+        "Business model makes sense to be that low because you could start out without a business model and then add one later if your customers are demanding what you're creating.",
+        "Does the company have a very clear path generating customer revenues?"
+      ]
+    },
+    {
+      "name": "Funding",
+      "quotes_advice": [
+        "Funding [matters less, because] if you're underfunded at first, but you're gaining traction, especially in today's age, it's very, very easy to get intense funding."
+      ]
+    },
+    {
+      "name": "Adaptability",
+      "quotes_advice": [
+        "Everybody has a plan until they get punched in the face.",
+        "So much about a team's execution is its ability to adapt to getting punched in the face by the customer.",
+        "The customer is the true reality."
+      ]
+    }
+  ],
+  "resources": [],
+  "key_questions": [
+    "What factors actually matter the most for startup success?",
+    "Why do so many startups fail?",
+    "How does timing affect startup success?",
+    "How important is the idea compared to other aspects of company success?",
+    "Does funding play an important role in start up success?"
+  ]
+}
