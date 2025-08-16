@@ -13,46 +13,67 @@ api_key = os.getenv("GEMINI_API_KEY")
 
 app = FastAPI()
 
+# CORS setup
+origins = [
+    "http://localhost:3000",                 # for local dev
+    "https://podcast-pulse-xi.vercel.app",   # your Vercel frontend
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1","https://podcast-pulse-xi.vercel.app"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# Request model
 class DownloadRequest(BaseModel):
     youtube_url: str
 
+# Download endpoint
 @app.post("/download")
 async def download_podcast(request: DownloadRequest):
     try:
         print(f"Processing URL: {request.youtube_url}")
         result = downloader.download_audio_from_youtube(request.youtube_url)
         video_id = result.get("video_id", "unknown")
+
         if "error" in result:
-            raise HTTPException(status_code=500, detail=f"Error processing request: {result['error']}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Error processing request: {result['error']}"
+            )
+
         summary_path = f"downloads/{video_id}_summary.txt"
         with open(summary_path, "r", encoding="utf-8") as f:
             summary_data = json.load(f)
-        return {"message": result["message"], "video_id": video_id, "summary": summary_data}
+
+        return {
+            "message": result["message"],
+            "video_id": video_id,
+            "summary": summary_data
+        }
     except Exception as e:
         print(f"Error in /download: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error processing request: {str(e)}")
 
+# History endpoint
 @app.get("/history")
 async def get_history():
-    conn = sqlite3.connect('podcast_history.db')
+    conn = sqlite3.connect("podcast_history.db")
     c = conn.cursor()
     c.execute("SELECT video_id, timestamp FROM summaries")
     history = [{"video_id": row[0], "timestamp": row[1]} for row in c.fetchall()]
     conn.close()
     return {"history": history}
 
+# Root endpoint
 @app.get("/")
 async def redirect_root():
     return {"message": "Podcast Pulse API - Use /download with POST"}
 
+# API root endpoint
 @app.get("/api")
 async def api_root():
     return {"message": "Podcast Pulse API - Use /download with POST"}
