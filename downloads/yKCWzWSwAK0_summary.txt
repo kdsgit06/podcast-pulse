@@ -1,0 +1,61 @@
+{
+  "title": "How React Compiler is Changing Frontend Development | Lydia Hallie | Beyond Coding Podcast #205",
+  "topics": [
+    {
+      "name": "React Compiler's Purpose and Benefits",
+      "quotes_advice": [
+        "React Compiler kind of just takes that away from developers.",
+        "It's more shifting that responsibility to React itself.",
+        "It's like, okay, we know that you often have to memoize stuff in your React components just due to the way that our rendering system works."
+      ]
+    },
+    {
+      "name": "Developer Experience with React Compiler",
+      "quotes_advice": [
+        "So I understand it's going to solve it kind of in an automatic way.",
+        "The only additional thing now is like I have to actively say, okay, if I don't want React React compiler to kick in",
+        "I like the idea of not having this cognitive load of rendering cycles and then figuring out what to use callback or use Memo for."
+      ]
+    },
+    {
+      "name": "Setting up and Integrating React Compiler",
+      "quotes_advice": [
+        "So first you might run NPX React Compiler health check.",
+        "Then there's also the Islint plugin, and this is what most developers will use in their code base to Work with compiler",
+        "But yeah, then, then it's just turning it on in your build pipeline."
+      ]
+    },
+    {
+      "name": "React Compiler's Impact on Performance",
+      "quotes_advice": [
+        "Especially on low end devices it will definitely make a big difference.",
+        "I know for Instagram I believe they got like a 30% improvement just turning on compiling.",
+        "So in that case you can run React code really fast if you're running it on for example like Hermes, stuff like that on mobile devices."
+      ]
+    },
+    {
+      "name": "The Future of React and Frontend Development",
+      "quotes_advice": [
+        "I feel like eventually they might integrate it with other. It could be optimized for other kind of rendering engines as well.",
+        "I feel like a lot of frameworks, they come and go, some stick a little bit, but React still stands tall, I feel like.",
+        "No, I'm confident that React will only get better."
+      ]
+    },
+    {
+      "name": "AI-Generated Code and Its Implications",
+      "quotes_advice": [
+        "Tech trend. AI generated code. Vibe coding.",
+        "I love using these tools like cursor and stuff for it to reverse engineer code bases and to, you know, when I'm starting something new, I can just get a really quick overview of everything that's happening in the code and where it happens.",
+        "But still, the code that AI generates often for me is it's just not good."
+      ]
+    }
+  ],
+  "resources": [],
+  "key_questions": [
+    "Why does React Compiler exist?",
+    "How easy is it to set up React Compiler?",
+    "Is React Compiler production-ready?",
+    "What problems remain after incorporating React Compiler?",
+    "What tech trend does Lydia wish would go away?"
+  ]
+}

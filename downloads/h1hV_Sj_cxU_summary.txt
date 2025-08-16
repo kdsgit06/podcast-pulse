@@ -1,0 +1,47 @@
+{
+  "title": "\u26a0\ufe0f\u26a0\ufe0fTHIS IS GONNA CHANGE EVERYTHING | #rawtalksclips #shorts #telugushorts #telugupodcasts",
+  "topics": [
+    {
+      "name": "AI and Innovation Explosion",
+      "quotes_advice": [
+        "AI will create an explosion of innovation.",
+        "For the first time, AI is now going to change the creation process.",
+        "AI is only part of the disruption. AI is the brain, right? But there's a body that is coming at the robotics AI plus robotics, particularly humanoids. That is where the real disruption is coming from."
+      ]
+    },
+    {
+      "name": "Impact of AI on Various Industries",
+      "quotes_advice": [
+        "Every industry will change it.",
+        "Now creation time will be shrunk significantly.",
+        "AI will create an explosion of innovation technology Explosion of innovation."
+      ]
+    },
+    {
+      "name": "AI and Robotics",
+      "quotes_advice": [
+        "AI is only part of the disruption.",
+        "AI is the brain...But there's a body that is coming at the robotics...particularly humanoids.",
+        "That is where the real disruption is coming from."
+      ]
+    },
+    {
+      "name": "Choosing a Co-founder",
+      "quotes_advice": [
+        "Philosophical alignment is the key then everything else has fallen in place.",
+        "If you need to answer that question. Philosophical alignment is the key then everything else has fallen in place.",
+        "I want to exit, I want to take it for the long run. There's a disagreement, a philosophical alignment. Then everything else will fall in place. That is the main key point."
+      ]
+    }
+  ],
+  "resources": [
+    "Rotox Full podcast with Aman Kunte"
+  ],
+  "key_questions": [
+    "What is that you're looking at and any opportunities that you are looking at?",
+    "How will AI impact the creation process across different industries?",
+    "What's the connection between AI and robotics in driving the next wave of disruption?",
+    "How to choose a co-founder with a similar mindset?",
+    "What is the most crucial aspect to consider when choosing a co-founder?"
+  ]
+}
