@@ -1,9 +1,11 @@
-# C:\Users\DELL\Desktop\projects\personal projects\podcast-pulse\frontend-react\api\download.py
-import json
+import os
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # Add parent directory
+ # Absolute import # Add parent directory
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from . import downloader  # Use a relative import  # Adjust import to reach the downloader module
+from downloader import download_audio_from_youtube  # Absolute import
 
 app = FastAPI()
 
@@ -22,11 +24,11 @@ class DownloadRequest(BaseModel):
 async def download_podcast(request: DownloadRequest):
     try:
         print(f"Processing URL: {request.youtube_url}")
-        result = downloader.download_audio_from_youtube(request.youtube_url)
+        result = download_audio_from_youtube(request.youtube_url)
         video_id = result.get("video_id", "unknown")
         if "error" in result:
             raise HTTPException(status_code=500, detail=f"Error processing request: {result['error']}")
-        # Vercel doesn’t persist files; use a temporary summary for now
+        # Vercel doesn’t persist files; use a test summary
         summary = {"title": "Test Summary", "topics": [{"name": "Test", "quotes_advice": ["Test advice"]}]}
         return {"message": result["message"], "video_id": video_id, "summary": summary}
     except Exception as e:
