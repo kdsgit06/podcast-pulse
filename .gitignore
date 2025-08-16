@@ -1,18 +1,22 @@
-# Ignore downloaded files
-downloads/
+# Ignore downloaded files (uncomment if you want to ignore locally, but leave for Render)
+#downloads/
 
 # Ignore Python cache
 __pycache__/
+*.pyc
 
 # Ignore virtual environment
+.venv/
 .venv/
 
 # Ignore database files (optional, recreate on Vercel)
 *.db
-__pycache__/
-*.pyc
+
+# Ignore environment variables
 .env
-.venv/
+
+# Ignore Node.js modules
 node_modules/
-*.txt
-downloads/
+
+# Allow requirements.txt (remove *.txt or exclude specific .txt files)
+# *.txt
