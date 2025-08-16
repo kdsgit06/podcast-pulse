@@ -6,14 +6,18 @@
       "use": "@vercel/python"
     },
     {
-      "src": "package.json",
-      "use": "@vercel/next@canary"
+      "src": "build/**",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
     {
       "src": "/download",
       "dest": "api/download.py"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }
