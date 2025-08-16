@@ -114,4 +114,4 @@ def download_audio_from_youtube(youtube_url):
                 raise Exception("Failed to generate summary")
     except Exception as e:
         print(f"Download error: {str(e)}")
-        return {"message": f"Failed to process {youtube_url}", "error": str(e)}uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
+        return {"message": f"Failed to process {youtube_url}", "error": str(e)}
