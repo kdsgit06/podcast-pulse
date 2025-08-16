@@ -3,35 +3,36 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
 from . import downloader
-import os
-import sqlite3
-import json
+import os, sqlite3, json
 
-# Load environment variables
+# env
 load_dotenv()
 api_key = os.getenv("GEMINI_API_KEY")
 
 app = FastAPI()
 
-# CORS setup
-origins = [
-    "http://localhost:3000",                 # for local dev
-    "https://podcast-pulse-xi.vercel.app",   # your Vercel frontend
+# ✅ allow local + vercel (replace the Vercel URL after you deploy)
+ORIGINS = [
+    "http://localhost:3000",
+    "https://podcast-pulse-xi.vercel.app",
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Request model
+# ensure downloads/ exists on boot (ephemeral but fine for our flow)
+@app.on_event("startup")
+def ensure_dirs():
+    os.makedirs("downloads", exist_ok=True)
+
 class DownloadRequest(BaseModel):
     youtube_url: str
 
-# Download endpoint
 @app.post("/download")
 async def download_podcast(request: DownloadRequest):
     try:
@@ -40,25 +41,17 @@ async def download_podcast(request: DownloadRequest):
         video_id = result.get("video_id", "unknown")
 
         if "error" in result:
-            raise HTTPException(
-                status_code=500,
-                detail=f"Error processing request: {result['error']}"
-            )
+            raise HTTPException(status_code=500, detail=f"Error processing request: {result['error']}")
 
         summary_path = f"downloads/{video_id}_summary.txt"
         with open(summary_path, "r", encoding="utf-8") as f:
             summary_data = json.load(f)
 
-        return {
-            "message": result["message"],
-            "video_id": video_id,
-            "summary": summary_data
-        }
+        return {"message": result["message"], "video_id": video_id, "summary": summary_data}
     except Exception as e:
         print(f"Error in /download: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error processing request: {str(e)}")
 
-# History endpoint
 @app.get("/history")
 async def get_history():
     conn = sqlite3.connect("podcast_history.db")
@@ -68,12 +61,10 @@ async def get_history():
     conn.close()
     return {"history": history}
 
-# Root endpoint
 @app.get("/")
-async def redirect_root():
+async def root():
     return {"message": "Podcast Pulse API - Use /download with POST"}
 
-# API root endpoint
 @app.get("/api")
 async def api_root():
     return {"message": "Podcast Pulse API - Use /download with POST"}

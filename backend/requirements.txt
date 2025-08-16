@@ -1,6 +1,8 @@
-fastapi
-uvicorn
-yt-dlp
-pydantic
+fastapi==0.115.0
+uvicorn==0.30.6
 python-dotenv
-sqlite3-binary
+pydantic>=2
+yt-dlp
+google-generativeai
+youtube-transcript-api
+requests
