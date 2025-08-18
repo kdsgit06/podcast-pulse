@@ -15,11 +15,11 @@ const fetchSummary = async () => {
   setLoading(true);
   setError(null);
   try {
-    const response = await fetch('https://thriving-ambition.up.railway.app/download', {
+ const response = await fetch(`https://thriving-ambition.up.railway.app/download?youtube_url=${encodeURIComponent(url)}`, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ youtube_url: url }),
 });
+// Similarly for /history if used
     const data = await response.json();
     if (!response.ok || data.error) throw new Error(data.error || 'Error');
     setSummary(data.summary);
