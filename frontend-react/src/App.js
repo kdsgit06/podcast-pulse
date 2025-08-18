@@ -15,10 +15,11 @@ const fetchSummary = async () => {
   setLoading(true);
   setError(null);
   try {
- const response = await fetch(`https://thriving-ambition.up.railway.app/download?youtube_url=${encodeURIComponent(url)}`, {
+const response = await fetch(`https://thriving-ambition.up.railway.app/download?youtube_url=${encodeURIComponent(url)}`, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
 });
+// Update /history if used
 // Similarly for /history if used
     const data = await response.json();
     if (!response.ok || data.error) throw new Error(data.error || 'Error');
