@@ -13,4 +13,4 @@ test.html
 .venv/
 node_modules/
 .vercel/
-build/
+frontend-react/build/
