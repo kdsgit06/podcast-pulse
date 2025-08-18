@@ -7,7 +7,10 @@ downloads/
 backend/downloads/
 frontend-react/downloads/
 
-# Misc
+# Vercel/Frontend
 test.html
 *.log
 .venv/
+node_modules/
+.vercel/
+build/
