@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
-from . import downloader
+import downloader
 import os, sqlite3, json
 
 # env
@@ -11,15 +11,14 @@ api_key = os.getenv("GEMINI_API_KEY")
 
 app = FastAPI()
 
-# ✅ allow local + vercel (replace the Vercel URL after you deploy)
-ORIGINS = [
+origins = [
     "http://localhost:3000",
     "https://podcast-pulse-xi.vercel.app",
-]
+]  # Added comma here
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ORIGINS,
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
