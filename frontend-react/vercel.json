@@ -2,22 +2,21 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/download.py",
-      "use": "@vercel/python"
-    },
-    {
-      "src": "build/**",
-      "use": "@vercel/static"
+      "src": "frontend-react/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "build"
+      }
     }
   ],
   "routes": [
     {
-      "src": "/download",
-      "dest": "api/download.py"
-    },
-    {
       "src": "/(.*)",
-      "dest": "/index.html"
+      "dest": "/frontend-react/index.html"
     }
-  ]
+  ],
+  "framework": "create-react-app",
+  "installCommand": "cd frontend-react && npm install",
+  "buildCommand": "cd frontend-react && npm run build",
+  "outputDirectory": "frontend-react/build"
 }
