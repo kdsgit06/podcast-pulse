@@ -1,8 +1,16 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pathlib import Path
+
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import os, json, sqlite3
+BASE_DIR = Path(__file__).parent.resolve()
+STATIC_DIR = BASE_DIR / "static"
+STATIC_DIR.mkdir(exist_ok=True)  # ensure exists
+
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR), html=True), name="static")
+
 
 # IMPORTANT: if downloader.py is in the same folder as main.py, this works:
 import downloader
@@ -60,4 +68,5 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get("/")
 def root():
-    return {"message": "Open /static/index.html"}
+    # quick ping
+    return {"message": "Podcast Pulse API - open /static/index.html"}
