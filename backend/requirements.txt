@@ -9,3 +9,13 @@ requests==2.32.3
 assemblyai==0.33.0
 python-multipart==0.0.9
 nltk==3.9.1
+# requirements.txt
+fastapi
+uvicorn[standard]
+pydantic
+python-dotenv
+yt-dlp
+assemblyai
+google-generativeai
+# runtime.txt
+3.11.9

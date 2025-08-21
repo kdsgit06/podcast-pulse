@@ -1,30 +1,24 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-from dotenv import load_dotenv
-import downloader
-import os, sqlite3, json
+import os, json, sqlite3
 
-# env
-load_dotenv()
-api_key = os.getenv("GEMINI_API_KEY")
+# IMPORTANT: if downloader.py is in the same folder as main.py, this works:
+import downloader
+# If your imports fail on Railway, switch to: from . import downloader
 
 app = FastAPI()
 
-origins = [
-    "http://localhost:3000",
-    "https://podcast-pulse-xi.vercel.app",
-]  # Added comma here
-
+# keep wide-open during bring-up; we’ll tighten later
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["*"],   # includes OPTIONS
     allow_headers=["*"],
 )
 
-# ensure downloads/ exists on boot (ephemeral but fine for our flow)
 @app.on_event("startup")
 def ensure_dirs():
     os.makedirs("downloads", exist_ok=True)
@@ -33,23 +27,24 @@ class DownloadRequest(BaseModel):
     youtube_url: str
 
 @app.post("/download")
-async def download_podcast(request: DownloadRequest):
+async def download_podcast(req: DownloadRequest):
     try:
-        print(f"Processing URL: {request.youtube_url}")
-        result = downloader.download_audio_from_youtube(request.youtube_url)
-        video_id = result.get("video_id", "unknown")
-
+        result = downloader.download_audio_from_youtube(req.youtube_url)
         if "error" in result:
-            raise HTTPException(status_code=500, detail=f"Error processing request: {result['error']}")
+            raise HTTPException(status_code=500, detail=result["error"])
 
+        video_id = result.get("video_id", "unknown")
         summary_path = f"downloads/{video_id}_summary.txt"
         with open(summary_path, "r", encoding="utf-8") as f:
             summary_data = json.load(f)
 
-        return {"message": result["message"], "video_id": video_id, "summary": summary_data}
+        return {
+            "message": result.get("message", "ok"),
+            "video_id": video_id,
+            "summary": summary_data
+        }
     except Exception as e:
-        print(f"Error in /download: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error processing request: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/history")
 async def get_history():
@@ -60,10 +55,9 @@ async def get_history():
     conn.close()
     return {"history": history}
 
-@app.get("/")
-async def root():
-    return {"message": "Podcast Pulse API - Use /download with POST"}
+# Serve a simple page at /static/index.html
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
-@app.get("/api")
-async def api_root():
-    return {"message": "Podcast Pulse API - Use /download with POST"}
+@app.get("/")
+def root():
+    return {"message": "Open /static/index.html"}

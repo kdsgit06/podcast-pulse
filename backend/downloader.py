@@ -1,15 +1,13 @@
 import yt_dlp
 import sys
 import assemblyai as aai
-import nltk
 import sqlite3
 import google.generativeai as genai
 from dotenv import load_dotenv
 import os
 import json
-
-# Set NLTK data path
-nltk.data.path.append(r"C:\Users\DELL\nltk_data")
+import nltk
+nltk.data.path.append("./nltk_data")
 
 # Load environment variables
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '.env'))

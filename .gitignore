@@ -6,6 +6,12 @@ __pycache__/
 downloads/
 backend/downloads/
 frontend-react/downloads/
+__pycache__/
+*.pyc
+downloads/
+podcast_history.db
+.env
+.venv/
 
 # Vercel/Frontend
 test.html
@@ -14,3 +20,7 @@ test.html
 node_modules/
 .vercel/
 frontend-react/build/
+backend/backend/
+frontend-react/public/robots.txt
+podcast_history.db
+backend/__pycache__/
