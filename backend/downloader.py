@@ -9,7 +9,7 @@ from youtube_transcript_api import (
 from pathlib import Path
 import os, json, re, tempfile
 
-# Optional libs (present in your requirements)
+# Optional libs (present in requirements.txt)
 import assemblyai as aai
 from yt_dlp import YoutubeDL
 
@@ -18,6 +18,12 @@ from yt_dlp import YoutubeDL
 _YT_ID_RE = re.compile(r"^[A-Za-z0-9_-]{6,}$")
 
 def extract_video_id(url: str) -> str:
+    """
+    Supports:
+      https://www.youtube.com/watch?v=ID
+      https://youtu.be/ID?si=...
+      https://www.youtube.com/shorts/ID?feature=share
+    """
     u = urlparse(url.strip())
     host = u.netloc.lower()
 
@@ -38,6 +44,7 @@ def extract_video_id(url: str) -> str:
         if "v" in q and q["v"]:
             return q["v"][0]
 
+    # fallback: last path segment if it looks like an ID
     last = u.path.strip("/").split("/")[-1]
     if _YT_ID_RE.match(last):
         return last
@@ -47,7 +54,9 @@ def _join(items):
     return " ".join([i["text"] for i in items if i["text"].strip()])
 
 def summarize_text_to_json(transcript_text: str) -> dict:
-    # TODO: replace with Gemini/OpenAI. Keep stub for demo stability.
+    """
+    TODO: plug Gemini/OpenAI. Stub keeps demo stable.
+    """
     snippet = transcript_text.replace("\n", " ")[:1200]
     return {
         "title": "Podcast Pulse — Auto Summary",
@@ -79,9 +88,8 @@ def _cookies_file_from_env():
 def download_audio_from_youtube(youtube_url: str) -> dict:
     """
     Robust flow:
-      1) Try transcript API (handles CC videos, multiple langs & translate).
-      2) If that fails, use yt-dlp (no download) to get an audio URL and
-         send it to AssemblyAI via remote_url -> fetch transcript -> summarize.
+      1) Try YouTube transcripts (multi-language + translate).
+      2) Fallback: yt-dlp (no download) -> get audio URL -> AssemblyAI transcribe.
          Uses cookies if provided via env var YTDLP_COOKIES.
     Saves summary JSON to downloads/{video_id}_summary.txt
     """
@@ -92,18 +100,20 @@ def download_audio_from_youtube(youtube_url: str) -> dict:
     # ----- Stage 1: YouTube transcripts (prefer CC) -----
     try:
         try:
-            items = YouTubeTranscriptApi.get_transcript(video_id, languages=["en", "en-US", "en-GB"])
+            items = YouTubeTranscriptApi.get_transcript(
+                video_id, languages=["en", "en-US", "en-GB"]
+            )
         except (NoTranscriptFound, TranscriptsDisabled):
             transcripts = YouTubeTranscriptApi.list_transcripts(video_id)
-            # try direct English
             try:
                 t = transcripts.find_transcript(["en", "en-US", "en-GB"])
                 items = t.fetch()
             except Exception:
-                # try translate any to English
+                # translate any available to English
                 t_any = next(iter(transcripts))
                 t_en = t_any.translate("en")
                 items = t_en.fetch()
+
         text = _join(items)
         if text.strip():
             summary = summarize_text_to_json(text)
@@ -115,7 +125,7 @@ def download_audio_from_youtube(youtube_url: str) -> dict:
         # swallow parser glitches and fall through to Stage 2
         pass
 
-       # ----- Stage 2: yt-dlp (no download) + AssemblyAI (correct SDK) -----
+    # ----- Stage 2: yt-dlp (no download) + AssemblyAI (correct SDK) -----
     aai_key = os.getenv("ASSEMBLYAI_API_KEY")
     if not aai_key:
         return {"error": "Transcript failed and ASSEMBLYAI_API_KEY is not set on server."}
@@ -124,43 +134,60 @@ def download_audio_from_youtube(youtube_url: str) -> dict:
     ydl_opts = {
         "quiet": True,
         "skip_download": True,
-        "format": "bestaudio/best",
         "noplaylist": True,
-        # keep default client; android can 403 on some vids
-        # "extractor_args": {"youtube": {"player_client": ["web"]}},
+        # do NOT force a specific format; we'll scan formats and pick one
     }
     if cookies:
         ydl_opts["cookiefile"] = cookies
 
     try:
-        # 1) Get a direct audio URL WITHOUT downloading
+        # 1) Get metadata WITHOUT downloading
         with YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(youtube_url, download=False)
-            audio_url = None
 
-            # Some extractors put the url at top-level; others in formats[]
-            if "url" in info:
-                audio_url = info["url"]
-            else:
-                for f in info.get("formats", []):
-                    # choose a format with audio
-                    if f.get("acodec") and f.get("acodec") != "none" and f.get("url"):
-                        audio_url = f["url"]
-                        break
+        # 1b) Pick a viable audio URL from the available formats
+        def pick_audio_url(info: dict):
+            formats = info.get("formats") or []
+            candidates = []
 
+            for f in formats:
+                url = f.get("url")
+                acodec = f.get("acodec")
+                if url and acodec and acodec != "none":
+                    # prefer higher bitrate audio
+                    candidates.append({
+                        "url": url,
+                        "abr": f.get("abr") or 0,
+                        "proto": (f.get("protocol") or "").lower()
+                    })
+
+            # if nothing found yet, accept HLS/m3u8 streams (AAI can fetch)
+            if not candidates:
+                for f in formats:
+                    url = f.get("url")
+                    proto = (f.get("protocol") or "").lower()
+                    if url and ("m3u8" in proto or "http" in proto):
+                        candidates.append({"url": url, "abr": f.get("abr") or 0, "proto": proto})
+
+            if candidates:
+                candidates.sort(key=lambda x: x["abr"], reverse=True)
+                return candidates[0]["url"]
+
+            # last chance: some extractors put a direct url at top-level
+            return info.get("url")
+
+        audio_url = pick_audio_url(info)
         if not audio_url:
-            return {"error": "Could not obtain an audio URL from YouTube (blocked). Try another video or add cookies."}
+            return {"error": "Could not obtain an audio URL from YouTube (blocked or images-only). Try another video or refresh cookies."}
 
         # 2) Ask AssemblyAI to fetch & transcribe that remote audio URL
         aai.settings.api_key = aai_key
         transcriber = aai.Transcriber()
         transcript = transcriber.transcribe(audio_url=audio_url)
 
-        if transcript.status != "completed" or not transcript.text:
-            # expose error to the UI if present
+        if transcript.status != "completed" or not getattr(transcript, "text", ""):
             return {"error": f"AssemblyAI failed: {getattr(transcript, 'error', 'no text')}"}
 
-        # 3) Summarize (stub)
         summary = summarize_text_to_json(transcript.text)
         _write_summary(video_id, summary)
         return {"message": "Processed via AssemblyAI (audio URL)", "video_id": video_id}
