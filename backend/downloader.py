@@ -115,8 +115,7 @@ def download_audio_from_youtube(youtube_url: str) -> dict:
         # swallow parser glitches and fall through to Stage 2
         pass
 
-    # ----- Stage 2: yt-dlp (no download) + AssemblyAI -----
-    # Requirements: env ASSEMBLYAI_API_KEY set; cookies optional but recommended.
+       # ----- Stage 2: yt-dlp (no download) + AssemblyAI (correct SDK) -----
     aai_key = os.getenv("ASSEMBLYAI_API_KEY")
     if not aai_key:
         return {"error": "Transcript failed and ASSEMBLYAI_API_KEY is not set on server."}
@@ -127,33 +126,41 @@ def download_audio_from_youtube(youtube_url: str) -> dict:
         "skip_download": True,
         "format": "bestaudio/best",
         "noplaylist": True,
-        # more friendly client to avoid some blocks
-        "extractor_args": {"youtube": {"player_client": ["android"]}},
+        # keep default client; android can 403 on some vids
+        # "extractor_args": {"youtube": {"player_client": ["web"]}},
     }
     if cookies:
         ydl_opts["cookiefile"] = cookies
 
     try:
+        # 1) Get a direct audio URL WITHOUT downloading
         with YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(youtube_url, download=False)
-            # pick an audio format URL
-            url = None
+            audio_url = None
+
+            # Some extractors put the url at top-level; others in formats[]
             if "url" in info:
-                url = info["url"]
+                audio_url = info["url"]
             else:
                 for f in info.get("formats", []):
+                    # choose a format with audio
                     if f.get("acodec") and f.get("acodec") != "none" and f.get("url"):
-                        url = f["url"]; break
-            if not url:
-                return {"error": "Could not get audio URL from YouTube. Try another video."}
+                        audio_url = f["url"]
+                        break
 
+        if not audio_url:
+            return {"error": "Could not obtain an audio URL from YouTube (blocked). Try another video or add cookies."}
+
+        # 2) Ask AssemblyAI to fetch & transcribe that remote audio URL
         aai.settings.api_key = aai_key
-        transcript = aai.Transcript.create(audio_url=url)
-        transcript = aai.Transcript.get(transcript.id, polling=True)
+        transcriber = aai.Transcriber()
+        transcript = transcriber.transcribe(audio_url=audio_url)
 
         if transcript.status != "completed" or not transcript.text:
-            return {"error": f"AssemblyAI failed: {transcript.error or 'no text'}"}
+            # expose error to the UI if present
+            return {"error": f"AssemblyAI failed: {getattr(transcript, 'error', 'no text')}"}
 
+        # 3) Summarize (stub)
         summary = summarize_text_to_json(transcript.text)
         _write_summary(video_id, summary)
         return {"message": "Processed via AssemblyAI (audio URL)", "video_id": video_id}
