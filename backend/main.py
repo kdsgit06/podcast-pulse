@@ -45,30 +45,24 @@ class DownloadRequest(BaseModel):
 async def download_podcast(req: DownloadRequest):
     try:
         result = downloader.download_audio_from_youtube(req.youtube_url)
-        if not isinstance(result, dict):
-            raise HTTPException(status_code=500, detail="Downloader returned invalid result")
 
-        if "error" in result:
-            raise HTTPException(status_code=500, detail=result["error"])
+        # ---- demo-friendly: never 500 for known errors ----
+        if isinstance(result, dict) and "error" in result:
+            return {"error": result["error"]}   # 200 with message
 
         video_id = result.get("video_id", "unknown")
         summary_path = BASE_DIR / "downloads" / f"{video_id}_summary.txt"
-
         if not summary_path.exists():
-            raise HTTPException(status_code=500, detail=f"Summary not found: {summary_path}")
+            return {"error": f"Summary not found for {video_id}"}
 
         with open(summary_path, "r", encoding="utf-8") as f:
             summary_data = json.load(f)
 
-        return {
-            "message": result.get("message", "ok"),
-            "video_id": video_id,
-            "summary": summary_data
-        }
-    except HTTPException:
-        raise
+        return {"message": result.get("message", "ok"), "video_id": video_id, "summary": summary_data}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        # final safety net; should rarely hit during demo
+        return {"error": f"Unexpected: {str(e)}"}
+
 
 @app.get("/history")
 async def get_history():
