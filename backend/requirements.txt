@@ -1,7 +1,7 @@
 fastapi==0.115.0
-uvicorn==0.30.6
-python-dotenv==1.0.1
+uvicorn[standard]==0.30.6
 pydantic==2.9.2
+python-dotenv==1.0.1
 yt-dlp==2024.8.6
 google-generativeai==0.8.2
 youtube-transcript-api==0.6.2
@@ -9,13 +9,3 @@ requests==2.32.3
 assemblyai==0.33.0
 python-multipart==0.0.9
 nltk==3.9.1
-# requirements.txt
-fastapi
-uvicorn[standard]
-pydantic
-python-dotenv
-yt-dlp
-assemblyai
-google-generativeai
-# runtime.txt
-3.11.9
