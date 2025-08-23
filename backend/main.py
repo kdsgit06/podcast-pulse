@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -19,9 +19,9 @@ app.add_middleware(
 
 # ---- Imports (works both locally and on Railway) ----
 try:
-    from . import downloader  # when package context exists
+    from . import downloader  # when running as a package
 except Exception:
-    import downloader          # fallback
+    import downloader          # when running as a script/module
 
 # ---- Paths & Static ----
 BASE_DIR = Path(__file__).parent.resolve()
@@ -46,9 +46,9 @@ async def download_podcast(req: DownloadRequest):
     try:
         result = downloader.download_audio_from_youtube(req.youtube_url)
 
-        # ---- demo-friendly: never 500 for known errors ----
+        # Demo-friendly: never 500 for known errors
         if isinstance(result, dict) and "error" in result:
-            return {"error": result["error"]}   # 200 with message
+            return {"error": result["error"]}
 
         video_id = result.get("video_id", "unknown")
         summary_path = BASE_DIR / "downloads" / f"{video_id}_summary.txt"
@@ -58,22 +58,34 @@ async def download_podcast(req: DownloadRequest):
         with open(summary_path, "r", encoding="utf-8") as f:
             summary_data = json.load(f)
 
-        return {"message": result.get("message", "ok"), "video_id": video_id, "summary": summary_data}
+        return {
+            "message": result.get("message", "ok"),
+            "video_id": video_id,
+            "summary": summary_data,
+        }
     except Exception as e:
-        # final safety net; should rarely hit during demo
+        # Final safety net
         return {"error": f"Unexpected: {str(e)}"}
-
 
 @app.get("/history")
 async def get_history():
-    conn = sqlite3.connect(str(BASE_DIR / "podcast_history.db"))
+    db_path = BASE_DIR / "podcast_history.db"
+    if not db_path.exists():
+        return {"history": []}
     try:
+        conn = sqlite3.connect(str(db_path))
         cur = conn.cursor()
         cur.execute("SELECT video_id, timestamp FROM summaries")
         rows = cur.fetchall()
         return {"history": [{"video_id": v, "timestamp": t} for (v, t) in rows]}
+    except sqlite3.OperationalError:
+        # table might not exist yet
+        return {"history": []}
     finally:
-        conn.close()
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 @app.get("/")
 def root():
