@@ -126,6 +126,11 @@ def download_audio_from_youtube(youtube_url: str) -> dict:
         pass
 
     # ----- Stage 2: yt-dlp (no download) + AssemblyAI (correct SDK) -----
+        # ----- Stage 2: Best-effort (yt-dlp metadata -> AssemblyAI) -----
+    # Feature flag: disable by default for a stable demo
+    if os.getenv("ENABLE_AAI_FALLBACK", "false").lower() != "true":
+        return {"error": "This video has no captions. Please use a link with CC (captions)."}
+
     aai_key = os.getenv("ASSEMBLYAI_API_KEY")
     if not aai_key:
         return {"error": "Transcript failed and ASSEMBLYAI_API_KEY is not set on server."}
