@@ -98,44 +98,37 @@ def download_audio_from_youtube(youtube_url: str) -> dict:
         return {"error": "Invalid YouTube URL. Could not parse a video ID."}
 
     # ----- Stage 1: YouTube transcripts (prefer CC) -----
-      # ----- Stage 1: YouTube transcripts (prefer CC) -----
+try:
+    transcripts = YouTubeTranscriptApi.list_transcripts(video_id)
+
+    # Try direct English first
     try:
-        # List all available transcripts (manual + auto)
-        transcripts = YouTubeTranscriptApi.list_transcripts(video_id)
-
-        # Try direct English first (US/GB), manual or auto
+        t = transcripts.find_transcript(["en", "en-US", "en-GB"])
+        items = t.fetch()
+    except Exception:
+        # Fallback: take first transcript and translate to English if possible
+        t_any = next(iter(transcripts))
         try:
-            t = transcripts.find_transcript(["en", "en-US", "en-GB"])
-            items = t.fetch()
+            items = t_any.translate("en").fetch()
         except Exception:
-            # If English not present, pick the first transcript and translate if possible
-            t_any = next(iter(transcripts))  # may be auto-generated
-            try:
-                t_en = t_any.translate("en")
-                items = t_en.fetch()
-            except Exception:
-                items = t_any.fetch()
+            items = t_any.fetch()
 
-        text = _join(items)
-        if text.strip():
-            summary = summarize_text_to_json(text)
-            _write_summary(video_id, summary)
-            return {"message": "Processed via transcript", "video_id": video_id}
-        else:
-            # Build a helpful error with languages we saw
-            langs = []
-            for t in transcripts:
-                try:
-                    langs.append(getattr(t, "language_code", "?"))
-                except Exception:
-                    pass
-            return {"error": f"No usable transcript text. Available languages: {', '.join(langs) or 'unknown'}"}
-    except (CouldNotRetrieveTranscript, NoTranscriptFound, TranscriptsDisabled) as e:
-        # Report what we found so the UI tells the truth
-        return {"error": f"Transcript not accessible for this video ({type(e).__name__}). Try a different link with CC."}
-    except Exception as e:
-        # swallow parser glitches and fall through to Stage 2 if enabled
-        pass
+    text = _join(items)
+    if text.strip():
+        summary = summarize_text_to_json(text)
+        _write_summary(video_id, summary)
+        return {"message": "Processed via transcript", "video_id": video_id}
+    else:
+        langs = []
+        for t in transcripts:
+            try: langs.append(getattr(t, "language_code", "?"))
+            except Exception: pass
+        return {"error": f"No usable transcript text. Available languages: {', '.join(langs) or 'unknown'}"}
+except (CouldNotRetrieveTranscript, NoTranscriptFound, TranscriptsDisabled) as e:
+    return {"error": f"Transcript not accessible for this video ({type(e).__name__}). Try a different link with CC."}
+except Exception:
+    pass  # fall through to Stage-2 if enabled
+
 
 
     # ----- Stage 2: yt-dlp (no download) + AssemblyAI (correct SDK) -----
