@@ -80,17 +80,22 @@ def download_audio_from_youtube(youtube_url: str) -> dict:
         return {"error": "Invalid YouTube URL. Could not parse a video ID."}
 
     # ----- Stage 1: robust transcript fetch -----
+       # ----- Stage 1: YouTube transcripts (prefer CC) -----
     try:
         transcripts = YouTubeTranscriptApi.list_transcripts(video_id)
+
+        # Try English first (manual or auto)
         try:
             t = transcripts.find_transcript(["en", "en-US", "en-GB"])
             items = t.fetch()
         except Exception:
+            # If no English, take first and translate to English if possible
             t_any = next(iter(transcripts))
             try:
                 items = t_any.translate("en").fetch()
             except Exception:
                 items = t_any.fetch()
+
         text = _join(items)
         if text.strip():
             _write_summary(video_id, summarize_text_to_json(text))
@@ -103,13 +108,18 @@ def download_audio_from_youtube(youtube_url: str) -> dict:
                 except Exception:
                     pass
             return {"error": f"No usable transcript text. Available languages: {', '.join(langs) or 'unknown'}"}
+
     except (CouldNotRetrieveTranscript, NoTranscriptFound, TranscriptsDisabled) as e:
-        # fall through to Stage 2 if enabled, else friendly error
+        # If fallback disabled, tell the truth clearly and STOP here
         if os.getenv("ENABLE_AAI_FALLBACK", "false").lower() != "true":
             return {"error": f"Transcript not accessible for this video ({type(e).__name__}). Use a link with CC."}
-    except Exception:
-        # unknown issue → try Stage 2 only if enabled
-        pass
+        # else fall through to Stage‑2
+    except Exception as e:
+        # Unknown parsing issue; if fallback disabled, report it and STOP
+        if os.getenv("ENABLE_AAI_FALLBACK", "false").lower() != "true":
+            return {"error": f"Transcript step failed unexpectedly: {str(e)}"}
+        # else fall through to Stage‑2
+
 
     # ----- Stage 2: feature-flagged fallback (yt-dlp -> AAI) -----
     if os.getenv("ENABLE_AAI_FALLBACK", "false").lower() != "true":
