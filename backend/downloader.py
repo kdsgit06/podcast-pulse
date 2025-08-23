@@ -79,46 +79,57 @@ def download_audio_from_youtube(youtube_url: str) -> dict:
     if not video_id:
         return {"error": "Invalid YouTube URL. Could not parse a video ID."}
 
-    # ----- Stage 1: robust transcript fetch -----
-       # ----- Stage 1: YouTube transcripts (prefer CC) -----
-    try:
-        transcripts = YouTubeTranscriptApi.list_transcripts(video_id)
+    # ----- Stage 1: YouTube transcripts (prefer CC) -----
+    import time
+    from xml.etree.ElementTree import ParseError  # defensive: library sometimes bubbles this
 
-        # Try English first (manual or auto)
-        try:
-            t = transcripts.find_transcript(["en", "en-US", "en-GB"])
-            items = t.fetch()
-        except Exception:
-            # If no English, take first and translate to English if possible
-            t_any = next(iter(transcripts))
+    def try_fetch_transcript(video_id: str, attempts: int = 3, delay: float = 0.8):
+        last_err = None
+        for i in range(attempts):
             try:
-                items = t_any.translate("en").fetch()
-            except Exception:
-                items = t_any.fetch()
+                transcripts = YouTubeTranscriptApi.list_transcripts(video_id)
 
+                # Try English first; otherwise pick first and translate to EN if possible
+                try:
+                    t = transcripts.find_transcript(["en", "en-US", "en-GB"])
+                    items = t.fetch()
+                except Exception:
+                    t_any = next(iter(transcripts))
+                    try:
+                        items = t_any.translate("en").fetch()
+                    except Exception:
+                        items = t_any.fetch()
+
+                return items, transcripts, None
+            except (CouldNotRetrieveTranscript, NoTranscriptFound, TranscriptsDisabled) as e:
+                return None, None, e  # hard stop: no transcript published
+            except (ParseError, Exception) as e:
+                # flaky HTML/empty response from YT; retry a couple of times
+                last_err = e
+                time.sleep(delay)
+        return None, None, last_err
+
+    items, transcripts, hard_err = try_fetch_transcript(video_id)
+    if hard_err is not None:
+        if os.getenv("ENABLE_AAI_FALLBACK", "false").lower() != "true":
+            # tell the user the real reason (clean)
+            return {"error": f"Transcript not accessible for this video ({type(hard_err).__name__}). Use a link with CC."}
+        # else fall through to Stage-2
+
+    if items:
         text = _join(items)
         if text.strip():
             _write_summary(video_id, summarize_text_to_json(text))
             return {"message": "Processed via transcript", "video_id": video_id}
         else:
             langs = []
-            for t in transcripts:
-                try:
-                    langs.append(getattr(t, "language_code", "?"))
-                except Exception:
-                    pass
+            if transcripts:
+                for t in transcripts:
+                    try:
+                        langs.append(getattr(t, "language_code", "?"))
+                    except Exception:
+                        pass
             return {"error": f"No usable transcript text. Available languages: {', '.join(langs) or 'unknown'}"}
-
-    except (CouldNotRetrieveTranscript, NoTranscriptFound, TranscriptsDisabled) as e:
-        # If fallback disabled, tell the truth clearly and STOP here
-        if os.getenv("ENABLE_AAI_FALLBACK", "false").lower() != "true":
-            return {"error": f"Transcript not accessible for this video ({type(e).__name__}). Use a link with CC."}
-        # else fall through to Stage‑2
-    except Exception as e:
-        # Unknown parsing issue; if fallback disabled, report it and STOP
-        if os.getenv("ENABLE_AAI_FALLBACK", "false").lower() != "true":
-            return {"error": f"Transcript step failed unexpectedly: {str(e)}"}
-        # else fall through to Stage‑2
 
 
     # ----- Stage 2: feature-flagged fallback (yt-dlp -> AAI) -----
