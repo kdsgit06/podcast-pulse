@@ -132,7 +132,7 @@ def download_audio_from_youtube(youtube_url: str) -> dict:
             return {"error": f"No usable transcript text. Available languages: {', '.join(langs) or 'unknown'}"}
 
 
-    # ----- Stage 2: feature-flagged fallback (yt-dlp -> AAI) -----
+    # -----     # ----- Stage 2: AAI fallback (no yt-dlp) -----
     if os.getenv("ENABLE_AAI_FALLBACK", "false").lower() != "true":
         return {"error": "This video has no captions. Please use a link with CC (captions)."}
 
@@ -140,33 +140,18 @@ def download_audio_from_youtube(youtube_url: str) -> dict:
     if not aai_key:
         return {"error": "AAI fallback disabled: ASSEMBLYAI_API_KEY not set."}
 
-    cookies = _cookies_file_from_env()
-    ydl_opts = {"quiet": True, "skip_download": True, "noplaylist": True}
-    if cookies:
-        ydl_opts["cookiefile"] = cookies
-
     try:
-        audio_url = None
-        for client in (None, "web", "android", "ios"):
-            opts = dict(ydl_opts)
-            if client:
-                opts["extractor_args"] = {"youtube": {"player_client": [client]}}
-            with YoutubeDL(opts) as ydl:
-                info = ydl.extract_info(youtube_url, download=False)
-            audio_url = _pick_audio_url(info)
-            if audio_url:
-                break
-
-        if not audio_url:
-            return {"error": "Could not obtain an audio stream from YouTube (blocked). Use a video with CC."}
-
         aai.settings.api_key = aai_key
-        transcript = aai.Transcriber().transcribe(audio_url=audio_url)
+        # AAI will fetch and extract audio from many page URLs, including YouTube,
+        # when given as an audio_url. This avoids yt-dlp on your server.
+        transcriber = aai.Transcriber()
+        transcript = transcriber.transcribe(audio_url=youtube_url)
+
         if transcript.status != "completed" or not getattr(transcript, "text", ""):
             return {"error": f"AssemblyAI failed: {getattr(transcript, 'error', 'no text')}"}
 
-        _write_summary(video_id, summarize_text_to_json(transcript.text))
-        return {"message": "Processed via AssemblyAI (audio URL)", "video_id": video_id}
-
-    except Exception:
-        return {"error": "YouTube blocked audio on this link. Use a video with CC; audio fallback is best-effort."}
+        summary = summarize_text_to_json(transcript.text)
+        _write_summary(video_id, summary)
+        return {"message": "Processed via AssemblyAI (page URL)", "video_id": video_id}
+    except Exception as e:
+        return {"error": f"AAI fallback failed: {str(e)}"}
