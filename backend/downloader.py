@@ -1,167 +1,100 @@
-from urllib.parse import urlparse, parse_qs
-from youtube_transcript_api import (
-    YouTubeTranscriptApi,
-    TranscriptsDisabled,
-    NoTranscriptFound,
-    CouldNotRetrieveTranscript,
-)
+# downloader.py (only Stage-2 changed; keep your Stage-1 CC flow)
 from pathlib import Path
 import os, json, re, tempfile
-
-# Optional libs (installed)
-import assemblyai as aai
 from yt_dlp import YoutubeDL
+import assemblyai as aai
 
-_YT_ID_RE = re.compile(r"^[A-Za-z0-9_-]{6,}$")
-
-def extract_video_id(url: str) -> str:
-    u = urlparse(url.strip()); host = u.netloc.lower()
-    if host.endswith("youtu.be"):
-        return u.path.strip("/").split("/")[0]
-    if "youtube.com" in host and "/shorts/" in u.path:
-        parts = [p for p in u.path.split("/") if p]
-        if len(parts) >= 2 and parts[0] == "shorts":
-            return parts[1]
-    if "youtube.com" in host:
-        q = parse_qs(u.query)
-        if "v" in q and q["v"]:
-            return q["v"][0]
-    last = u.path.strip("/").split("/")[-1]
-    return last if _YT_ID_RE.match(last) else ""
-
-def _join(items): 
-    return " ".join([i["text"] for i in items if i["text"].strip()])
-
-def summarize_text_to_json(text: str) -> dict:
-    snippet = text.replace("\n", " ")[:1200]
-    return {
-        "title": "Podcast Pulse — Transcript Summary",
-        "topics": [{"name": "Key Ideas", "details": snippet}],
-        "quotes": [],
-        "advice": [],
-    }
-
-def _write_summary(video_id: str, data: dict) -> str:
-    base = Path(__file__).parent.resolve()
-    (base / "downloads").mkdir(exist_ok=True)
-    out = base / "downloads" / f"{video_id}_summary.txt"
-    with open(out, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
-    return str(out)
+# ... keep your extract_video_id, summarize_text_to_json, _write_summary, etc ...
 
 def _cookies_file_from_env():
     data = os.getenv("YTDLP_COOKIES")
     if not data:
         return None
     fp = tempfile.NamedTemporaryFile(delete=False, suffix=".txt")
-    fp.write(data.encode("utf-8")); fp.flush(); fp.close()
+    fp.write(data.encode("utf-8"))
+    fp.flush(); fp.close()
     return fp.name
 
-def _pick_audio_url(info: dict):
-    fmts = info.get("formats") or []
-    candidates = []
-    for f in fmts:
-        url = f.get("url"); ac = f.get("acodec")
-        if url and ac and ac != "none":
-            candidates.append({"url": url, "abr": f.get("abr") or 0})
-    if not candidates:
-        for f in fmts:
-            url = f.get("url"); proto = (f.get("protocol") or "").lower()
-            if url and ("m3u8" in proto or "http" in proto):
-                candidates.append({"url": url, "abr": f.get("abr") or 0})
-    if candidates:
-        candidates.sort(key=lambda x: x["abr"], reverse=True)
-        return candidates[0]["url"]
-    return info.get("url")
+def _download_audio_to_tmp(youtube_url: str, cookies_path: str | None):
+    """Return (local_path, video_id) or (None, None) on failure."""
+    tmpdir = tempfile.mkdtemp(prefix="pp_")
+    outtpl = os.path.join(tmpdir, "%(id)s.%(ext)s")
+
+    ydl_opts = {
+        "quiet": True,
+        "no_warnings": True,
+        "noprogress": True,
+        "outtmpl": outtpl,
+        "format": "bestaudio[ext=m4a]/bestaudio/best",
+        "restrictfilenames": True,
+        "noplaylist": True,
+        "extractor_args": {"youtube": {"player_client": ["web"]}},  # avoid android 403
+        "postprocessors": [
+            {"key": "FFmpegExtractAudio", "preferredcodec": "m4a", "preferredquality": "2"}
+        ],
+        "http_headers": {
+            "User-Agent": "Mozilla/5.0"
+        }
+    }
+    if cookies_path:
+        ydl_opts["cookiefile"] = cookies_path
+
+    with YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(youtube_url, download=True)
+        vid = info.get("id")
+        # file will be <tmpdir>/<id>.m4a after pp
+        for ext in ("m4a", "mp3", "webm", "opus"):
+            candidate = os.path.join(tmpdir, f"{vid}.{ext}")
+            if os.path.exists(candidate):
+                return candidate, vid
+    return None, None
+
+def _transcribe_with_aai(local_audio_path: str) -> str:
+    """Upload local file and return transcript text or raise."""
+    aai.settings.api_key = os.getenv("ASSEMBLYAI_API_KEY", "")
+    if not aai.settings.api_key:
+        raise RuntimeError("ASSEMBLYAI_API_KEY not set")
+
+    transcriber = aai.Transcriber()
+    # AssemblyAI Python SDK accepts local file path via 'audio' parameter
+    transcript = transcriber.transcribe(audio=local_audio_path)
+
+    if transcript.status != "completed" or not transcript.text:
+        err = getattr(transcript, "error", "no text")
+        raise RuntimeError(f"AssemblyAI failed: {err}")
+    return transcript.text
 
 def download_audio_from_youtube(youtube_url: str) -> dict:
-    
+    # ----- parse id -----
     video_id = extract_video_id(youtube_url)
     if not video_id:
         return {"error": "Invalid YouTube URL. Could not parse a video ID."}
-     # ---- Seeded demo transcripts (guaranteed) ----
+
+    # ----- Seeded demos (keep) -----
     seed = Path(__file__).parent / "seed" / f"{video_id}.json"
     if seed.exists():
-        with open(seed, "r", encoding="utf-8-sig") as f:  # <- tolerate BOM
+        with open(seed, "r", encoding="utf-8-sig") as f:
             data = json.load(f)
         _write_summary(video_id, data)
         return {"message": "Processed via demo seed", "video_id": video_id}
 
-
-
-    # ----- Stage 1: YouTube transcripts (prefer CC) -----
-    import time
-    from xml.etree.ElementTree import ParseError  # defensive: library sometimes bubbles this
-
-    def try_fetch_transcript(video_id: str, attempts: int = 3, delay: float = 0.8):
-        last_err = None
-        for i in range(attempts):
-            try:
-                transcripts = YouTubeTranscriptApi.list_transcripts(video_id)
-
-                # Try English first; otherwise pick first and translate to EN if possible
-                try:
-                    t = transcripts.find_transcript(["en", "en-US", "en-GB"])
-                    items = t.fetch()
-                except Exception:
-                    t_any = next(iter(transcripts))
-                    try:
-                        items = t_any.translate("en").fetch()
-                    except Exception:
-                        items = t_any.fetch()
-
-                return items, transcripts, None
-            except (CouldNotRetrieveTranscript, NoTranscriptFound, TranscriptsDisabled) as e:
-                return None, None, e  # hard stop: no transcript published
-            except (ParseError, Exception) as e:
-                # flaky HTML/empty response from YT; retry a couple of times
-                last_err = e
-                time.sleep(delay)
-        return None, None, last_err
-
-    items, transcripts, hard_err = try_fetch_transcript(video_id)
-    if hard_err is not None:
-        if os.getenv("ENABLE_AAI_FALLBACK", "false").lower() != "true":
-            # tell the user the real reason (clean)
-            return {"error": f"Transcript not accessible for this video ({type(hard_err).__name__}). Use a link with CC."}
-        # else fall through to Stage-2
-
-    if items:
-        text = _join(items)
-        if text.strip():
-            _write_summary(video_id, summarize_text_to_json(text))
-            return {"message": "Processed via transcript", "video_id": video_id}
-        else:
-            langs = []
-            if transcripts:
-                for t in transcripts:
-                    try:
-                        langs.append(getattr(t, "language_code", "?"))
-                    except Exception:
-                        pass
-            return {"error": f"No usable transcript text. Available languages: {', '.join(langs) or 'unknown'}"}
-
-
-    # -----     # ----- Stage 2: AAI fallback (no yt-dlp) -----
-    if os.getenv("ENABLE_AAI_FALLBACK", "false").lower() != "true":
-        return {"error": "This video has no captions. Please use a link with CC (captions)."}
-
-    aai_key = os.getenv("ASSEMBLYAI_API_KEY")
-    if not aai_key:
-        return {"error": "AAI fallback disabled: ASSEMBLYAI_API_KEY not set."}
-
+    # ----- Stage 1: CC transcript (keep your existing robust CC logic) -----
     try:
-        aai.settings.api_key = aai_key
-        # AAI will fetch and extract audio from many page URLs, including YouTube,
-        # when given as an audio_url. This avoids yt-dlp on your server.
-        transcriber = aai.Transcriber()
-        transcript = transcriber.transcribe(audio_url=youtube_url)
+        # ... your YouTubeTranscriptApi code here ...
+        pass
+    except Exception:
+        pass  # fall through
 
-        if transcript.status != "completed" or not getattr(transcript, "text", ""):
-            return {"error": f"AssemblyAI failed: {getattr(transcript, 'error', 'no text')}"}
+    # ----- Stage 2: Download small audio -> upload file to AAI -----
+    try:
+        cookies = _cookies_file_from_env()
+        local_path, vid = _download_audio_to_tmp(youtube_url, cookies)
+        if not local_path:
+            return {"error": "Could not download audio from YouTube (blocked). Add cookies or try another link."}
 
-        summary = summarize_text_to_json(transcript.text)
+        text = _transcribe_with_aai(local_path)
+        summary = summarize_text_to_json(text)
         _write_summary(video_id, summary)
-        return {"message": "Processed via AssemblyAI (page URL)", "video_id": video_id}
+        return {"message": "Processed via AssemblyAI (file upload)", "video_id": video_id}
     except Exception as e:
-        return {"error": f"AAI fallback failed: {str(e)}"}
+        return {"error": f"Audio fallback failed: {e}"}
