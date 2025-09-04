@@ -75,9 +75,18 @@ def _pick_audio_url(info: dict):
     return info.get("url")
 
 def download_audio_from_youtube(youtube_url: str) -> dict:
+    
     video_id = extract_video_id(youtube_url)
     if not video_id:
         return {"error": "Invalid YouTube URL. Could not parse a video ID."}
+        # ---- Seeded demo transcripts (guaranteed) ----
+    seed = Path(__file__).parent / "seed" / f"{video_id}.json"
+    if seed.exists():
+        with open(seed, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        _write_summary(video_id, data)
+        return {"message": "Processed via demo seed", "video_id": video_id}
+
 
     # ----- Stage 1: YouTube transcripts (prefer CC) -----
     import time
