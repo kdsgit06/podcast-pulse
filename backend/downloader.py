@@ -84,36 +84,97 @@ def _cookies_file_from_env() -> str | None:
 
 def _download_audio_to_tmp(youtube_url: str, cookies_path: str | None):
     """
-    Download bestaudio (webm/opus/m4a/etc.) to temp dir.
-    Return (local_path, video_id) or (None, None).
+    Try multiple yt-dlp strategies to download a small audio file.
+    Returns (local_audio_path, video_id) on success, else (None, error_message).
     """
+    import shutil, subprocess, sys
     tmpdir = tempfile.mkdtemp(prefix="pp_")
     outtpl = os.path.join(tmpdir, "%(id)s.%(ext)s")
-    ydl_opts = {
-        "quiet": True, "no_warnings": True, "noprogress": True,
-        "outtmpl": outtpl, "noplaylist": True,
-        "format": "bestaudio/best",
+
+    # candidate extractor player clients to try (order matters)
+    client_trials = [
+        ["web"],                 # default web client
+        ["web", "tv"],           # web + tv
+        ["tv"],                  # tv client
+        ["android"],             # android client
+        ["web_h5", "web"],       # alternate web h5
+    ]
+
+    # basic ydl options (we'll mutate per-trial)
+    base_opts = {
+        "quiet": True,
+        "no_warnings": True,
+        "noprogress": True,
+        "outtmpl": outtpl,
+        # first try m4a/bestaudio; if no file, we fall back below
+        "format": "bestaudio[ext=m4a]/bestaudio/best",
         "restrictfilenames": True,
-        "extractor_args": {"youtube": {"player_client": ["web"]}},
+        "noplaylist": True,
+        "postprocessors": [
+            # keep postprocessor but it's optional; if ffmpeg missing this will still work
+            {"key": "FFmpegExtractAudio", "preferredcodec": "m4a", "preferredquality": "2"}
+        ],
         "http_headers": {"User-Agent": "Mozilla/5.0"},
+        # avoid DASH-only manifests if that causes issues
+        "youtube_include_dash_manifest": False,
     }
     if cookies_path:
-        ydl_opts["cookiefile"] = cookies_path
+        base_opts["cookiefile"] = cookies_path
 
+    last_err = None
     try:
-        with YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(youtube_url, download=True)
-            vid = info.get("id")
-            # pick the downloaded file by id.* in tmpdir
-            for name in os.listdir(tmpdir):
-                if name.startswith(f"{vid}."):
-                    return os.path.join(tmpdir, name), vid
-    except Exception:
-        shutil.rmtree(tmpdir, ignore_errors=True)
-        return None, None
+        for clients in client_trials:
+            opts = dict(base_opts)
+            opts["extractor_args"] = {"youtube": {"player_client": clients}}
+            try:
+                with YoutubeDL(opts) as ydl:
+                    info = ydl.extract_info(youtube_url, download=True)
+                    vid = info.get("id") or extract_video_id(youtube_url)
+                    # check for file with common audio extensions
+                    for ext in ("m4a", "mp3", "webm", "opus"):
+                        candidate = os.path.join(tmpdir, f"{vid}.{ext}")
+                        if os.path.exists(candidate) and os.path.getsize(candidate) > 1024:
+                            return candidate, vid
+                    # If there was no postprocessed file, attempt to look for the original ext
+                    # Try to find any file in tmpdir (some extracts keep original extension)
+                    files = [f for f in os.listdir(tmpdir) if os.path.isfile(os.path.join(tmpdir, f))]
+                    if files:
+                        # pick largest file as likely audio
+                        files_sorted = sorted(files, key=lambda f: os.path.getsize(os.path.join(tmpdir, f)), reverse=True)
+                        candidate = os.path.join(tmpdir, files_sorted[0])
+                        if os.path.getsize(candidate) > 1024:
+                            return candidate, vid
+            except Exception as e:
+                # capture the yt-dlp error and keep trying next client
+                last_err = str(e)
+                # continue to next client trial
+                continue
 
+        # final fallback: try a very permissive format (no ffmpeg extract)
+        try:
+            opts = dict(base_opts)
+            opts["format"] = "bestaudio/best"
+            opts.pop("postprocessors", None)
+            opts["extractor_args"] = {"youtube": {"player_client": ["web", "android", "tv"]}}
+            with YoutubeDL(opts) as ydl:
+                info = ydl.extract_info(youtube_url, download=True)
+                vid = info.get("id") or extract_video_id(youtube_url)
+                for f in os.listdir(tmpdir):
+                    candidate = os.path.join(tmpdir, f)
+                    if os.path.isfile(candidate) and os.path.getsize(candidate) > 1024:
+                        return candidate, vid
+        except Exception as e:
+            last_err = (last_err or "") + " | final-permissive: " + str(e)
+            shutil.rmtree(tmpdir, ignore_errors=True)
+            return None, last_err or "unknown yt-dlp failure"
+
+    except Exception as e:
+        shutil.rmtree(tmpdir, ignore_errors=True)
+        return None, str(e)
+
+    # if we reached here, nothing worked
     shutil.rmtree(tmpdir, ignore_errors=True)
-    return None, None
+    return None, last_err or "Could not download audio (unknown reason)"
 
 def _transcribe_with_aai(local_audio_path: str) -> str:
     aai.settings.api_key = os.getenv("ASSEMBLYAI_API_KEY", "")
